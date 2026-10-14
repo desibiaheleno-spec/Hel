@@ -171,6 +171,19 @@ export const QuotesView: React.FC<QuotesViewProps> = ({
         unitPrice: 500,
         totalPrice: 500,
       };
+    } else if (type === 'travel') {
+      const selectedClient = clients.find((c) => c.id === formData.clientId);
+      const distanceOneWay = selectedClient?.distanceKm || 15;
+      const totalKm = distanceOneWay * 2;
+      const rate = company.kmRate > 0 ? company.kmRate : 2.5;
+      newItem = {
+        id: `it-${Date.now()}`,
+        type: 'travel',
+        description: `Deslocamento técnico (${totalKm} km ida e volta até ${selectedClient?.address.city || 'o cliente'})`,
+        quantity: totalKm,
+        unitPrice: rate,
+        totalPrice: Math.round(totalKm * rate * 100) / 100,
+      };
     } else {
       const defaultSrv = services[0];
       newItem = {
@@ -594,11 +607,51 @@ Para aprovar e agendarmos a execução técnica, basta responder a esta mensagem
                 </div>
               </div>
 
+              {/* Prévia de Quilometragem do Cliente Selecionado */}
+              {(() => {
+                const targetClient = clients.find((c) => c.id === formData.clientId);
+                const distOneWay = targetClient?.distanceKm || 15;
+                const roundTrip = distOneWay * 2;
+                const kmRate = company.kmRate > 0 ? company.kmRate : 2.5;
+                const travelCost = roundTrip * kmRate;
+                const hasTravelItem = formData.items.some((i) => i.type === 'travel');
+
+                return (
+                  <div className="p-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                          🚗 Deslocamento da Sede até o Cliente:
+                        </span>
+                        <span className="text-xs font-mono font-bold text-emerald-800">
+                          {distOneWay} km (Ida) • {roundTrip} km (Ida e Volta)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 mt-0.5">
+                        Taxa configurada na empresa: <span className="font-bold text-slate-800">R$ {kmRate.toFixed(2)}/km</span> • Custo total do trajeto: <span className="font-bold text-emerald-700">R$ {travelCost.toFixed(2)}</span>
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddItem('travel')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0 ${
+                        hasTravelItem
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                          : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
+                      }`}
+                    >
+                      <span>+ Incluir Deslocamento ({roundTrip} km - R$ {travelCost.toFixed(2)})</span>
+                    </button>
+                  </div>
+                );
+              })()}
+
               {/* Tabela Dinâmica de Itens do Orçamento */}
               <div>
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
                   <h3 className="font-bold text-slate-900 text-xs">
-                    Itens da Proposta (Serviços Tabelados, Horas H.H. e Peças)
+                    Itens da Proposta (Serviços Tabelados, Horas H.H., Deslocamento e Peças)
                   </h3>
                   <div className="flex items-center gap-2">
                     <button
@@ -614,6 +667,13 @@ Para aprovar e agendarmos a execução técnica, basta responder a esta mensagem
                       className="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 border border-indigo-200"
                     >
                       + Horas H.H.
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddItem('travel')}
+                      className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-semibold rounded-lg hover:bg-emerald-100 border border-emerald-200"
+                    >
+                      + Deslocamento (Km)
                     </button>
                     <button
                       type="button"
@@ -637,12 +697,20 @@ Para aprovar e agendarmos a execução técnica, basta responder a esta mensagem
                           className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded ${
                             item.type === 'service_hh'
                               ? 'bg-indigo-100 text-indigo-800'
+                              : item.type === 'travel'
+                              ? 'bg-emerald-100 text-emerald-800'
                               : item.type === 'part_material'
                               ? 'bg-amber-100 text-amber-800'
                               : 'bg-blue-100 text-blue-800'
                           }`}
                         >
-                          {item.type === 'service_hh' ? 'H.H.' : item.type === 'part_material' ? 'Peça' : 'Fixo'}
+                          {item.type === 'service_hh'
+                            ? 'H.H.'
+                            : item.type === 'travel'
+                            ? 'Desloc. Km'
+                            : item.type === 'part_material'
+                            ? 'Peça'
+                            : 'Fixo'}
                         </span>
                       </div>
 
@@ -670,7 +738,7 @@ Para aprovar e agendarmos a execução técnica, basta responder a esta mensagem
                             className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs text-center font-bold"
                           />
                           <span className="text-[10px] text-slate-400">
-                            {item.type === 'service_hh' ? 'h' : 'un'}
+                            {item.type === 'service_hh' ? 'h' : item.type === 'travel' ? 'km' : 'un'}
                           </span>
                         </div>
                       </div>

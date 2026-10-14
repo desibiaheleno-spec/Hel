@@ -10,6 +10,7 @@ import {
   Quote,
   WorkOrder,
   UserRole,
+  AuthUser,
 } from './types';
 
 // Componentes do Sistema
@@ -27,6 +28,7 @@ import { CompanyProfileView } from './components/CompanyProfileView';
 import { TechniciansManagementView } from './components/TechniciansManagementView';
 import { TechnicianPortalView } from './components/TechnicianPortalView';
 import { TechnicalReportModal } from './components/TechnicalReportModal';
+import { LoginScreen } from './components/LoginScreen';
 
 export default function App() {
   // Estado Global do Sistema
@@ -39,10 +41,50 @@ export default function App() {
   const [quotes, setQuotes] = useState<Quote[]>(() => StorageService.getQuotes());
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>(() => StorageService.getWorkOrders());
 
+  // Sessão de Login (Gestão da Empresa vs Técnico em Campo)
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('tecnogest_auth_session');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   // Navegação e Perfil
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
-  const [currentRole, setCurrentRole] = useState<UserRole>('manager');
-  const [selectedTechId, setSelectedTechId] = useState<string>(() => technicians[0]?.id || 'tech-01');
+  const [currentRole, setCurrentRole] = useState<UserRole>(() =>
+    currentUser?.role || 'manager'
+  );
+  const [selectedTechId, setSelectedTechId] = useState<string>(
+    () => currentUser?.technicianId || technicians[0]?.id || 'tech-01'
+  );
+
+  const handleLoginSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('tecnogest_auth_session', JSON.stringify(user));
+    } catch (e) {
+      console.warn('Failed to save session', e);
+    }
+    if (user.role === 'technician') {
+      setCurrentRole('technician');
+      if (user.technicianId) {
+        setSelectedTechId(user.technicianId);
+      }
+    } else {
+      setCurrentRole('manager');
+    }
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('tecnogest_auth_session');
+    } catch (e) {
+      console.warn('Failed to remove session', e);
+    }
+    setCurrentUser(null);
+  };
 
   // Modal de Relatório Técnico Geral
   const [viewingReportOrder, setViewingReportOrder] = useState<WorkOrder | null>(null);
@@ -177,6 +219,17 @@ export default function App() {
   const activeTechnician =
     technicians.find((t) => t.id === selectedTechId) || technicians[0];
 
+  // Se não estiver logado, exibe tela de login da empresa e do técnico
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        company={company}
+        technicians={technicians}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans">
       {/* Top Header */}
@@ -184,6 +237,8 @@ export default function App() {
         company={company}
         currentRole={currentRole}
         setCurrentRole={setCurrentRole}
+        currentUser={currentUser}
+        onLogout={handleLogout}
         technicians={technicians}
         selectedTechId={selectedTechId}
         setSelectedTechId={setSelectedTechId}
@@ -202,6 +257,8 @@ export default function App() {
                 workOrders={workOrders}
                 machines={machines}
                 company={company}
+                currentUser={currentUser}
+                onLogout={handleLogout}
                 onSaveWorkOrder={handleSaveWorkOrder}
                 onSwitchToManager={() => setCurrentRole('manager')}
               />
@@ -286,6 +343,7 @@ export default function App() {
                   machines={machines}
                   quotes={quotes}
                   workOrders={workOrders}
+                  company={company}
                   onSaveClient={handleSaveClient}
                   onDeleteClient={handleDeleteClient}
                   onSelectMachine={(m) => {

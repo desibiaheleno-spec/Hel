@@ -17,14 +17,17 @@ import {
   X,
   ChevronRight,
   AlertCircle,
+  Navigation,
 } from 'lucide-react';
-import { Client, Machine, Quote, WorkOrder } from '../types';
+import { Client, Machine, Quote, WorkOrder, CompanyProfile } from '../types';
+import { estimateDistanceKm } from '../lib/distanceCalculator';
 
 interface ClientsViewProps {
   clients: Client[];
   machines: Machine[];
   quotes: Quote[];
   workOrders: WorkOrder[];
+  company: CompanyProfile;
   onSaveClient: (client: Client) => void;
   onDeleteClient: (id: string) => void;
   onSelectMachine: (machine: Machine) => void;
@@ -37,6 +40,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   machines,
   quotes,
   workOrders,
+  company,
   onSaveClient,
   onDeleteClient,
   onSelectMachine,
@@ -66,6 +70,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     city: '',
     state: 'SP',
     zipCode: '',
+    distanceKm: 0,
     notes: '',
   });
 
@@ -87,8 +92,19 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     (w) => w.clientId === selectedClient?.id
   );
 
+  const calculateAutoDistance = (city: string, zip: string) => {
+    return estimateDistanceKm(
+      company.address?.city || 'São Paulo',
+      company.address?.zipCode || '',
+      city || 'São Paulo',
+      zip || ''
+    );
+  };
+
   const handleOpenCreateModal = () => {
     setEditingClient(null);
+    const initialCity = company.address?.city || 'São Paulo';
+    const initialDistance = calculateAutoDistance(initialCity, '');
     setFormData({
       name: '',
       tradeName: '',
@@ -101,9 +117,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       number: '',
       complement: '',
       neighborhood: '',
-      city: 'São Paulo',
-      state: 'SP',
+      city: initialCity,
+      state: company.address?.state || 'SP',
       zipCode: '',
+      distanceKm: initialDistance,
       notes: '',
     });
     setIsModalOpen(true);
@@ -111,6 +128,9 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
   const handleOpenEditModal = (client: Client) => {
     setEditingClient(client);
+    const dist =
+      client.distanceKm ??
+      calculateAutoDistance(client.address.city, client.address.zipCode);
     setFormData({
       name: client.name,
       tradeName: client.tradeName || '',
@@ -126,6 +146,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       city: client.address.city,
       state: client.address.state,
       zipCode: client.address.zipCode,
+      distanceKm: dist,
       notes: client.notes || '',
     });
     setIsModalOpen(true);
@@ -138,6 +159,11 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       return;
     }
 
+    const calculatedDist =
+      formData.distanceKm > 0
+        ? formData.distanceKm
+        : calculateAutoDistance(formData.city, formData.zipCode);
+
     const clientToSave: Client = {
       id: editingClient ? editingClient.id : `cli-${Date.now()}`,
       name: formData.name,
@@ -147,6 +173,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       phone: formData.phone,
       whatsapp: formData.whatsapp || formData.phone,
       email: formData.email,
+      distanceKm: calculatedDist,
       address: {
         street: formData.street,
         number: formData.number,
@@ -365,12 +392,27 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   )}
                 </div>
 
-                {/* Endereço */}
+                {/* Endereço & Quilometragem */}
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                  <p className="font-semibold text-slate-700 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-red-500" />
-                    Localização & Acesso
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-slate-700 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-red-500" />
+                      Localização & Acesso
+                    </p>
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(
+                        `${company.address.street || ''} ${company.address.city || ''} ${company.address.state || ''}`
+                      )}&destination=${encodeURIComponent(
+                        `${selectedClient.address.street} ${selectedClient.address.number} ${selectedClient.address.city} ${selectedClient.address.state}`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 hover:underline"
+                    >
+                      <Navigation className="w-3 h-3 text-blue-600" />
+                      Traçar Rota GPS
+                    </a>
+                  </div>
                   <p className="text-slate-700 font-medium">
                     {selectedClient.address.street}, {selectedClient.address.number}
                     {selectedClient.address.complement ? ` - ${selectedClient.address.complement}` : ''}
@@ -381,6 +423,28 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   {selectedClient.address.zipCode && (
                     <p className="text-slate-400 font-mono">CEP: {selectedClient.address.zipCode}</p>
                   )}
+
+                  {/* Informações de Quilometragem */}
+                  <div className="mt-2 pt-2 border-t border-slate-200/80 bg-blue-50/60 p-2 rounded-lg">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-600 font-medium">Distância da Sede:</span>
+                      <span className="font-bold text-blue-900 font-mono">
+                        {selectedClient.distanceKm ?? 15} km (Ida)
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] mt-0.5">
+                      <span className="text-slate-600 font-medium">Ida e Volta:</span>
+                      <span className="font-bold text-slate-800 font-mono">
+                        {(selectedClient.distanceKm ?? 15) * 2} km
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] mt-0.5 pt-1 border-t border-blue-200/60">
+                      <span className="text-slate-700 font-semibold">Valor Deslocamento ({company.kmRate ? `R$ ${company.kmRate.toFixed(2)}/km` : 'R$ 2,50/km'}):</span>
+                      <span className="font-bold text-emerald-700 font-mono">
+                        R$ {(((selectedClient.distanceKm ?? 15) * 2) * (company.kmRate || 2.5)).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -699,6 +763,69 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg"
                     />
                   </div>
+                </div>
+
+                {/* Bloco de Quilometragem e Deslocamento */}
+                <div className="sm:col-span-2 p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                      <Navigation className="w-3.5 h-3.5 text-amber-600" />
+                      Quilometragem da Sede até o Cliente
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const calculated = calculateAutoDistance(formData.city, formData.zipCode);
+                        setFormData({ ...formData, distanceKm: calculated });
+                      }}
+                      className="text-[11px] bg-amber-200/70 hover:bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded transition-colors"
+                    >
+                      Recalcular Distância
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Distância em Km (Só Ida)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min={1}
+                          value={formData.distanceKm}
+                          onChange={(e) =>
+                            setFormData({ ...formData, distanceKm: Math.max(1, Number(e.target.value)) })
+                          }
+                          className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg font-mono font-bold"
+                        />
+                        <span className="absolute right-2.5 top-2 text-[10px] text-slate-400 font-bold">
+                          km
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Ida e Volta Total
+                      </label>
+                      <div className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800">
+                        {formData.distanceKm * 2} km
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Custo Estimado ({company.kmRate ? `R$ ${company.kmRate.toFixed(2)}/km` : 'R$ 2,50/km'})
+                      </label>
+                      <div className="px-2.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-mono font-bold text-emerald-800">
+                        R$ {((formData.distanceKm * 2) * (company.kmRate || 2.5)).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    Calculado da sede em {company.address.city || 'sua cidade'} até {formData.city || 'o cliente'}. Este valor é sugerido automaticamente na elaboração de orçamentos.
+                  </p>
                 </div>
 
                 <div className="sm:col-span-2">

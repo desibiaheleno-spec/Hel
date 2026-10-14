@@ -40,6 +40,7 @@ export const TechniciansManagementView: React.FC<TechniciansManagementViewProps>
     phone: '',
     specialty: '',
     accessCode: '1004',
+    password: '',
     active: true,
     color: '#2563eb',
   });
@@ -52,12 +53,14 @@ export const TechniciansManagementView: React.FC<TechniciansManagementViewProps>
 
   const handleOpenCreate = () => {
     setEditingTech(null);
+    const code = (1000 + technicians.length + 1).toString();
     setFormData({
       name: '',
       email: '',
       phone: '',
       specialty: 'Técnico Mecânico',
-      accessCode: (1000 + technicians.length + 1).toString(),
+      accessCode: code,
+      password: code,
       active: true,
       color: '#2563eb',
     });
@@ -72,6 +75,7 @@ export const TechniciansManagementView: React.FC<TechniciansManagementViewProps>
       phone: tech.phone,
       specialty: tech.specialty,
       accessCode: tech.accessCode,
+      password: tech.password || tech.accessCode,
       active: tech.active,
       color: tech.color || '#2563eb',
     });
@@ -89,6 +93,7 @@ export const TechniciansManagementView: React.FC<TechniciansManagementViewProps>
       phone: formData.phone,
       specialty: formData.specialty,
       accessCode: formData.accessCode,
+      password: formData.password || formData.accessCode,
       active: formData.active,
       color: formData.color,
     };
@@ -295,6 +300,23 @@ export const TechniciansManagementView: React.FC<TechniciansManagementViewProps>
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono font-bold text-blue-700 text-center"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Senha de Login do Colaborador *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Ex: 1001 ou senha segura"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono text-slate-800"
+                />
+                <span className="text-[10px] text-slate-400 mt-0.5 block">
+                  Usada pelo técnico para entrar na tela de Ordens de Serviço. Pode ser o próprio PIN ou uma senha pessoal.
+                </span>
               </div>
 
               <div>

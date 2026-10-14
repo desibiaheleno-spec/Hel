@@ -346,7 +346,90 @@ export const CompanyProfileView: React.FC<CompanyProfileViewProps> = ({
           </div>
         </div>
 
-        {/* Bloco 4: Termos Padrão para Orçamentos e Garantia */}
+        {/* Bloco 4: Acesso e Credenciais do Administrador */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4 text-xs">
+          <h2 className="font-bold text-slate-900 text-sm flex items-center gap-2 pb-3 border-b border-slate-100">
+            <Shield className="w-4 h-4 text-blue-600" />
+            Credenciais de Login da Empresa (Acesso Gestão)
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                E-mail ou Usuário de Login da Empresa *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.adminLogin || ''}
+                onChange={(e) => setFormData({ ...formData, adminLogin: e.target.value })}
+                placeholder="admin@empresa.com"
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl font-medium"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Utilizado para entrar no painel de administração da empresa.
+              </span>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                Senha de Acesso da Empresa *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.adminPassword || ''}
+                onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
+                placeholder="admin123"
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl font-mono"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Senha mestra para gerenciar orçamentos, faturamento e equipe.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bloco 5: Deslocamento & Quilometragem (Km Rodado) */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4 text-xs">
+          <h2 className="font-bold text-slate-900 text-sm flex items-center gap-2 pb-3 border-b border-slate-100">
+            <MapPin className="w-4 h-4 text-amber-600" />
+            Configuração de Deslocamento & Quilometragem (Km)
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                Valor Cobrado por Quilômetro Rodado (R$/km) *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-slate-400 font-bold">R$</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  required
+                  value={formData.kmRate ?? 2.5}
+                  onChange={(e) => setFormData({ ...formData, kmRate: Number(e.target.value) })}
+                  placeholder="2.50"
+                  className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-xl font-bold font-mono text-slate-900"
+                />
+              </div>
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Valor aplicado automaticamente no cálculo de deslocamento da sede até o cliente.
+              </span>
+            </div>
+
+            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-amber-900 text-[11px]">
+              <p className="font-bold">Cálculo Automático de Distância:</p>
+              <p className="mt-0.5">
+                O aplicativo calcula automaticamente a distância em quilômetros da sede da empresa até o endereço de cada cliente e permite incluir o valor no orçamento.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bloco 6: Termos Padrão para Orçamentos e Garantia */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4 text-xs">
           <h2 className="font-bold text-slate-900 text-sm flex items-center gap-2 pb-3 border-b border-slate-100">
             <Shield className="w-4 h-4 text-indigo-600" />

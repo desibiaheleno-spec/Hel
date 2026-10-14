@@ -23,6 +23,7 @@ import {
   MaintenancePhoto,
   CompanyProfile,
   Machine,
+  AuthUser,
 } from '../types';
 import { TechnicalReportModal } from './TechnicalReportModal';
 
@@ -31,6 +32,8 @@ interface TechnicianPortalViewProps {
   workOrders: WorkOrder[];
   machines: Machine[];
   company: CompanyProfile;
+  currentUser?: AuthUser | null;
+  onLogout?: () => void;
   onSaveWorkOrder: (workOrder: WorkOrder) => void;
   onSwitchToManager: () => void;
 }
@@ -40,6 +43,8 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({
   workOrders,
   machines,
   company,
+  currentUser,
+  onLogout,
   onSaveWorkOrder,
   onSwitchToManager,
 }) => {
@@ -105,9 +110,17 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({
     reader.readAsDataURL(file);
   };
 
-  // Link para Google Maps
+  // Link para Google Maps com rota da empresa até o cliente
   const openGoogleMaps = (address: string) => {
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
+    const origin = `${company.address.street || ''} ${company.address.number || ''} ${company.address.city || ''} ${company.address.state || ''}`.trim();
+    if (origin) {
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(address)}`,
+        '_blank'
+      );
+    } else {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
+    }
   };
 
   const formatWhatsApp = (phone: string) => {
@@ -139,12 +152,25 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={onSwitchToManager}
-          className="text-xs bg-slate-900/80 hover:bg-slate-900 text-white font-semibold px-3 py-2 rounded-xl border border-white/10 transition-colors"
-        >
-          Voltar para Visão Gestor &rarr;
-        </button>
+        <div className="flex items-center gap-2">
+          {currentUser?.role === 'manager' ? (
+            <button
+              onClick={onSwitchToManager}
+              className="text-xs bg-slate-900/80 hover:bg-slate-900 text-white font-semibold px-3 py-2 rounded-xl border border-white/10 transition-colors"
+            >
+              Voltar para Visão Gestor &rarr;
+            </button>
+          ) : (
+            onLogout && (
+              <button
+                onClick={onLogout}
+                className="text-xs bg-red-950/80 hover:bg-red-900 text-red-200 font-semibold px-3.5 py-2 rounded-xl border border-red-800/80 transition-colors"
+              >
+                Encerrar Sessão / Sair
+              </button>
+            )
+          )}
+        </div>
       </div>
 
       {/* Grid Principal: Lista das minhas OS e Área de Execução */}

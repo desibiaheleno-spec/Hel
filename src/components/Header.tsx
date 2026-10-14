@@ -7,13 +7,17 @@ import {
   ShieldCheck,
   HardHat,
   ChevronDown,
+  LogOut,
+  User,
 } from 'lucide-react';
-import { CompanyProfile, Technician, UserRole } from '../types';
+import { CompanyProfile, Technician, UserRole, AuthUser } from '../types';
 
 interface HeaderProps {
   company: CompanyProfile;
   currentRole: UserRole;
   setCurrentRole: (role: UserRole) => void;
+  currentUser: AuthUser | null;
+  onLogout: () => void;
   technicians: Technician[];
   selectedTechId: string;
   setSelectedTechId: (id: string) => void;
@@ -25,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   company,
   currentRole,
   setCurrentRole,
+  currentUser,
+  onLogout,
   technicians,
   selectedTechId,
   setSelectedTechId,
@@ -57,33 +63,58 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Área de Ações e Alternância de Usuário */}
+          {/* Área de Ações e Usuário Logado */}
           <div className="flex items-center gap-3">
-            {/* Alternador de Modo: Gestor / Colaborador Técnico */}
-            <div className="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
-              <button
-                onClick={() => setCurrentRole('manager')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                  currentRole === 'manager'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Gestão</span>
-              </button>
-              <button
-                onClick={() => setCurrentRole('technician')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                  currentRole === 'technician'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <HardHat className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Técnico</span>
-              </button>
-            </div>
+            {/* Usuário Logado & Badge de Perfil */}
+            {currentUser && (
+              <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-800/80 rounded-xl border border-slate-700 text-xs">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    currentUser.role === 'manager' ? 'bg-blue-400' : 'bg-amber-400'
+                  }`}
+                />
+                <span className="text-slate-300 font-medium truncate max-w-[140px]">
+                  {currentUser.name}
+                </span>
+                <span
+                  className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${
+                    currentUser.role === 'manager'
+                      ? 'bg-blue-900/60 text-blue-300'
+                      : 'bg-amber-900/60 text-amber-300'
+                  }`}
+                >
+                  {currentUser.role === 'manager' ? 'Gestão' : 'Técnico'}
+                </span>
+              </div>
+            )}
+
+            {/* Alternador de Modo: Gestor pode alternar para simular visão técnica */}
+            {currentUser?.role === 'manager' && (
+              <div className="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
+                <button
+                  onClick={() => setCurrentRole('manager')}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                    currentRole === 'manager'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Gestão</span>
+                </button>
+                <button
+                  onClick={() => setCurrentRole('technician')}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                    currentRole === 'technician'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <HardHat className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Técnico</span>
+                </button>
+              </div>
+            )}
 
             {/* Seletor do Técnico ativo quando no modo colaborador */}
             {currentRole === 'technician' && (
@@ -122,6 +153,16 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
             )}
+
+            {/* Botão de Logout */}
+            <button
+              onClick={onLogout}
+              title="Sair do Sistema"
+              className="flex items-center gap-1 p-2 rounded-lg bg-slate-800 hover:bg-red-950/80 hover:text-red-400 text-slate-400 border border-slate-700 hover:border-red-800/80 transition-colors text-xs font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden xl:inline">Sair</span>
+            </button>
           </div>
         </div>
       </div>

@@ -1,5 +1,12 @@
 export type UserRole = 'manager' | 'technician';
 
+export interface AuthUser {
+  role: UserRole;
+  name: string;
+  email: string;
+  technicianId?: string;
+}
+
 export interface CompanyProfile {
   id: string;
   corporateName: string; // Razão Social
@@ -9,6 +16,9 @@ export interface CompanyProfile {
   phone: string;
   whatsapp: string;
   email: string;
+  adminLogin: string; // E-mail ou usuário de login do gestor
+  adminPassword: string; // Senha do gestor
+  kmRate: number; // Valor padrão cobrado por km rodado (ex: R$ 2,50/km)
   website?: string;
   address: {
     street: string;
@@ -41,6 +51,7 @@ export interface Client {
   phone: string;
   whatsapp: string;
   email: string;
+  distanceKm?: number; // Quilometragem calculada da sede da empresa até o cliente
   address: {
     street: string;
     number: string;
@@ -99,7 +110,8 @@ export interface Technician {
   email: string;
   phone: string;
   specialty: string;
-  accessCode: string; // Código simples para o colaborador acessar
+  accessCode: string; // Código simples ou matrícula para o colaborador
+  password?: string; // Senha de acesso do técnico
   active: boolean;
   color?: string; // Cor na agenda
 }
