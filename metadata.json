@@ -1,0 +1,6 @@
+{
+  "name": "TecnoGest - Gestão de Serviços & Manutenção",
+  "description": "Sistema completo de gestão para prestação de serviços técnicos, cadastro de empresa, clientes, máquinas/equipamentos, orçamentos e H.H., ordens de serviço, agenda de técnicos, registro de fotos antes/depois e relatórios de faturamento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

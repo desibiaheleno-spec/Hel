@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply antialiased bg-slate-100 text-slate-900;
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+  header, aside, button, nav {
+    display: none !important;
+  }
+  .printable-area, .printable-report {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
